@@ -139,3 +139,77 @@ export const isZipFile = (path) => {
 
 // Legacy export for backwards compatibility
 export const isProbablyText = (path) => !isBinaryFile(path);
+
+// Smart select files
+export const smartSelectFiles = (treeItems) => {
+    // 1. Identify Framework based on key files
+    const filePaths = treeItems.map(item => item.path);
+    let projectType = 'unknown';
+
+    if (filePaths.includes('package.json')) {
+        projectType = 'node';
+    } else if (filePaths.includes('Cargo.toml')) {
+        projectType = 'rust';
+    } else if (filePaths.includes('pubspec.yaml')) {
+        projectType = 'flutter';
+    } else if (filePaths.includes('requirements.txt') || filePaths.includes('pyproject.toml')) {
+        projectType = 'python';
+    } else if (filePaths.includes('pom.xml') || filePaths.includes('build.gradle')) {
+        projectType = 'java';
+    } else if (filePaths.includes('go.mod')) {
+        projectType = 'go';
+    }
+
+    // 2. Define important folders to select depending on framework
+    let autoSelectPrefixes = [];
+    if (projectType === 'node') {
+        autoSelectPrefixes = ['src/', 'lib/', 'app/', 'pages/', 'components/', 'utils/', 'hooks/'];
+    } else if (projectType === 'rust') {
+        autoSelectPrefixes = ['src/'];
+    } else if (projectType === 'flutter') {
+        autoSelectPrefixes = ['lib/'];
+    } else if (projectType === 'python') {
+        autoSelectPrefixes = ['src/', 'app/', 'main/']; // very variable, just guessing some common ones
+    } else if (projectType === 'java') {
+        autoSelectPrefixes = ['src/main/'];
+    } else if (projectType === 'go') {
+        autoSelectPrefixes = ['cmd/', 'pkg/', 'internal/'];
+    }
+
+    // Always keep root files (no slash) and some universal docs
+    const isRootFile = (path) => !path.includes('/');
+
+    // 3. Count files per folder to unselect huge folders
+    const folderCounts = {};
+    treeItems.forEach(item => {
+        const parts = item.path.split('/');
+        if (parts.length > 1) {
+            const folderPath = parts.slice(0, -1).join('/');
+            folderCounts[folderPath] = (folderCounts[folderPath] || 0) + 1;
+        }
+    });
+
+    const HUGE_FOLDER_LIMIT = 150;
+    const hugeFolders = Object.keys(folderCounts).filter(folder => folderCounts[folder] > HUGE_FOLDER_LIMIT);
+
+    // 4. Apply filtering
+    return treeItems.filter(item => {
+        // Skip files in huge folders
+        for (const hugeFolder of hugeFolders) {
+            if (item.path.startsWith(hugeFolder + '/')) {
+                return false;
+            }
+        }
+
+        // If framework recognized, filter strictly. Otherwise keep all.
+        if (projectType !== 'unknown') {
+            if (isRootFile(item.path)) return true;
+            for (const prefix of autoSelectPrefixes) {
+                if (item.path.startsWith(prefix)) return true;
+            }
+            return false;
+        }
+
+        return true;
+    });
+};
