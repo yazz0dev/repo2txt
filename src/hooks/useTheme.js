@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 
 const palette = {
-    primary: '#10a37f', // ChatGPT Green
-    primaryLight: '#34d399',
-    primaryDark: '#0d7d62',
-    secondary: '#10a37f',
+    primary: '#0055FF', // Electric Blue
+    primaryLight: '#3377FF',
+    primaryDark: '#0033CC',
+    secondary: '#32CD32', // Lime Green
 
-    success: '#10a37f',
+    success: '#32CD32',
     warning: '#f59e0b',
     error: '#ef4444',
 
-    // Light Theme (ChatGPT inspired)
+    // Light Theme
     white: '#FFFFFF',
     gray50: '#F7F7F8',
     gray100: '#ECECF1',
@@ -23,11 +23,11 @@ const palette = {
     gray800: '#343541',
     gray900: '#202123',
 
-    // Dark Theme (ChatGPT inspired)
-    darkBg: '#09090b', // zinc-950
-    darkCard: '#18181b', // zinc-900
-    darkSurface: '#27272a', // zinc-800
-    darkBorder: '#3f3f46', // zinc-700
+    // Dark Theme
+    darkBg: '#000000', // Pure black
+    darkCard: '#111111',
+    darkSurface: '#222222',
+    darkBorder: '#333333',
 };
 
 export const useTheme = () => {
@@ -46,7 +46,7 @@ export const useTheme = () => {
         return {
             isDark,
             colors: {
-                primary: isDark ? '#10a37f' : '#0d7d62',
+                primary: palette.primary,
                 primaryLight: palette.primaryLight,
                 primaryDark: palette.primaryDark,
                 secondary: palette.secondary,
@@ -56,16 +56,16 @@ export const useTheme = () => {
 
                 background: isDark ? palette.darkBg : palette.white,
                 card: isDark ? palette.darkCard : palette.white,
-                surface: isDark ? palette.darkSurface : palette.gray100,
-                border: isDark ? '#52525b' : palette.gray300, // zinc-600 / gray-300 for clearer borders
+                surface: isDark ? palette.darkSurface : palette.gray50,
+                border: isDark ? palette.darkBorder : palette.gray200,
 
-                text: isDark ? '#ffffff' : '#18181b', // pure white on dark / zinc-900 on light
-                textSecondary: isDark ? '#e4e4e7' : '#52525b', // zinc-200 on dark / zinc-600 on light
-                textPlaceholder: isDark ? '#a1a1aa' : '#71717a', // zinc-400 on dark / zinc-500 on light
+                text: isDark ? '#ffffff' : '#000000',
+                textSecondary: isDark ? '#cccccc' : '#555555',
+                textPlaceholder: isDark ? '#888888' : '#999999',
 
-                icon: isDark ? '#e4e4e7' : '#52525b',
+                icon: isDark ? '#ffffff' : '#000000',
 
-                primaryGradient: isDark ? 'linear-gradient(135deg, #10a37f 0%, #0d7d62 100%)' : 'linear-gradient(135deg, #10a37f 0%, #0d7d62 100%)',
+                primaryGradient: 'linear-gradient(135deg, #0055FF 0%, #32CD32 100%)',
             },
             spacing: {
                 xs: 4,
@@ -83,9 +83,9 @@ export const useTheme = () => {
                 full: 9999,
             },
             shadows: {
-                sm: { boxShadow: isDark ? '0 1px 2px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.05)' },
-                md: { boxShadow: isDark ? '0 4px 6px rgba(0,0,0,0.4)' : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)' },
-                lg: { boxShadow: isDark ? '0 10px 15px rgba(0,0,0,0.5)' : '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)' },
+                sm: { boxShadow: isDark ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(0,0,0,0.05)' },
+                md: { boxShadow: isDark ? '0 4px 6px rgba(0,0,0,0.8)' : '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)' },
+                lg: { boxShadow: isDark ? '0 10px 15px rgba(0,0,0,0.9)' : '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)' },
             }
         };
     }, [isDark]);
