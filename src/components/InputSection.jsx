@@ -78,22 +78,7 @@ const InputSection = (props) => {
 
       <div style={{ height: 1, margin: '16px 0', width: '100%', backgroundColor: colors.border }} />
 
-      <ProcessingOptions
-        removeComments={props.removeComments}
-        setRemoveComments={props.setRemoveComments}
-        removeExtraWhitespace={props.removeExtraWhitespace}
-        setRemoveExtraWhitespace={props.setRemoveExtraWhitespace}
-        includeOnlyCode={props.includeOnlyCode}
-        setIncludeOnlyCode={props.setIncludeOnlyCode}
-        maxFileSize={props.maxFileSize}
-        setMaxFileSize={props.setMaxFileSize}
-        ignorePatterns={props.ignorePatterns}
-        setIgnorePatterns={props.setIgnorePatterns}
-        tokenOptimizationLevel={props.tokenOptimizationLevel}
-        setTokenOptimizationLevel={props.setTokenOptimizationLevel}
-        respectGitignore={props.respectGitignore}
-        setRespectGitignore={props.setRespectGitignore}
-      />
+      <ProcessingOptions {...props} />
     </div>
   );
 };

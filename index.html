@@ -1,20 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>repointxt</title>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        background-color: #09090b;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+ <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>repointxt | GitHub Repo & Codebase to LLM Context Prompt Generator</title>
+
+  <meta name="description" content="Convert GitHub repositories and local directories into token-optimized text bundles for ChatGPT, Claude, and Gemini. Features Coding Mode, smart framework presets, and automatic multi-part batch splitting." />
+  <meta name="keywords" content="github to text, repo to llm, codebase context builder, chatgpt prompt context, claude prompt builder, gemini context window, token optimization, developer tools" />
+  <meta name="author" content="yazzdev • Corbit Technologies" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://repointxt.netlify.app/" />
+  <meta property="og:title" content="repointxt | Repository to AI Context Builder" />
+  <meta property="og:description" content="Instantly convert codebases into high-quality AI prompts with smart filtering, coding mode, and token window batching." />
+  <meta property="og:site_name" content="repointxt" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="repointxt | Codebase to AI Context Generator" />
+  <meta property="twitter:description" content="Convert GitHub repos and folders into token-optimized text for ChatGPT, Claude, and Gemini." />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "repointxt",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A developer tool to convert GitHub repositories and local directory trees into single or multi-part text bundles for Large Language Models with token optimization."
+    }
+  </script>
+
+  <style>
+   html, body {
+     margin: 0;
+     padding: 0;
+     background-color: #09090b;
+     color: #f4f4f5;
+     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+     -webkit-font-smoothing: antialiased;
+   }
+   .truncate {
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+   }
+  </style>
+ </head>
+ <body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+ </body>
 </html>

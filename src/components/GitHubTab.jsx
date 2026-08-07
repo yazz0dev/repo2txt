@@ -3,49 +3,32 @@ import { useTheme } from '../hooks/useTheme';
 import Icon from './Icon';
 import SourceInputs from './SourceInputs';
 
-const GitHubTab = ({
-  githubUrl,
-  setGithubUrl,
-  githubToken,
-  setGithubToken,
-  loading,
-  fetchGitHubRepo,
-  copyDirectoryStructure,
-  dirStructure,
-  urlHistory,
-  isMobile
-}) => {
+const GitHubTab = (props) => {
   const { colors, borderRadius, spacing, shadows, isDark } = useTheme();
 
   return (
     <div style={{ width: '100%' }}>
-      <SourceInputs
-        githubUrl={githubUrl}
-        setGithubUrl={setGithubUrl}
-        githubToken={githubToken}
-        setGithubToken={setGithubToken}
-        urlHistory={urlHistory}
-      />
+      <SourceInputs {...props} />
       <div style={{ display: 'flex', flexDirection: 'row', gap: 12, marginTop: spacing.md }}>
         <button
           style={{
             flex: 2,
             backgroundColor: colors.primary,
             borderRadius: borderRadius.md,
-            padding: isMobile ? '12px 16px' : '16px',
+            padding: props.isMobile ? '12px 16px' : '16px',
             border: 'none',
-            cursor: loading ? 'default' : 'pointer',
-            opacity: loading ? 0.7 : 1,
+            cursor: props.loading ? 'default' : 'pointer',
+            opacity: props.loading ? 0.7 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease-in-out',
             ...shadows.sm
           }}
-          onClick={() => fetchGitHubRepo(false)}
-          disabled={loading}
+          onClick={() => props.fetchGitHubRepo(false)}
+          disabled={props.loading}
         >
-          {loading ? (
+          {props.loading ? (
             <span style={{ color: isDark ? '#000' : '#fff' }}>Loading...</span>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -63,16 +46,16 @@ const GitHubTab = ({
             borderWidth: 1,
             borderColor: colors.border,
             borderStyle: 'solid',
-            padding: isMobile ? '12px 16px' : '16px',
-            cursor: loading ? 'default' : 'pointer',
-            opacity: loading ? 0.7 : 1,
+            padding: props.isMobile ? '12px 16px' : '16px',
+            cursor: props.loading ? 'default' : 'pointer',
+            opacity: props.loading ? 0.7 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease-in-out'
           }}
-          onClick={() => fetchGitHubRepo(true)}
-          disabled={loading}
+          onClick={() => props.fetchGitHubRepo(true)}
+          disabled={props.loading}
         >
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
             <Icon name="plus" size={16} color={colors.text} />
@@ -80,7 +63,7 @@ const GitHubTab = ({
           </div>
         </button>
 
-        {dirStructure ? (
+        {props.dirStructure ? (
           <button
             style={{
               backgroundColor: colors.surface,
@@ -92,11 +75,11 @@ const GitHubTab = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: loading ? 'default' : 'pointer',
-              opacity: loading ? 0.7 : 1
+              cursor: props.loading ? 'default' : 'pointer',
+              opacity: props.loading ? 0.7 : 1
             }}
-            onClick={() => copyDirectoryStructure()}
-            disabled={loading}
+            onClick={() => props.copyDirectoryStructure()}
+            disabled={props.loading}
           >
             <Icon name="copy" size={16} color={colors.text} />
           </button>
