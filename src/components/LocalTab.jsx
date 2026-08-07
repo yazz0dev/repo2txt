@@ -11,25 +11,24 @@ const LocalTab = (props) => {
         <button
           style={{
             flex: 1,
-            backgroundColor: colors.surface,
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderStyle: 'solid',
+            backgroundColor: colors.primary,
+            borderRadius: borderRadius.md,
+            border: 'none',
             padding: props.isMobile ? '12px 16px' : '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: props.loading ? 'default' : 'pointer',
             opacity: props.loading ? 0.7 : 1,
-            transition: 'all 0.2s ease-in-out'
+            transition: 'all 0.2s ease-in-out',
+            ...shadows.sm
           }}
-          onClick={() => props.pickLocalFiles(false)}
+          onClick={() => props.pickLocalDirectory(true)}
           disabled={props.loading}
         >
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Icon name="file" size={18} color={colors.text} />
-            <span style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>Select Files</span>
+            <Icon name="folder" size={18} color={isDark ? '#000' : '#fff'} />
+            <span style={{ color: isDark ? '#000' : '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 }}>Select Folder</span>
           </div>
         </button>
 
@@ -37,7 +36,7 @@ const LocalTab = (props) => {
           style={{
             flex: 1,
             backgroundColor: colors.surface,
-            borderRadius: 6,
+            borderRadius: borderRadius.md,
             borderWidth: 1,
             borderColor: colors.border,
             borderStyle: 'solid',
@@ -47,41 +46,18 @@ const LocalTab = (props) => {
             justifyContent: 'center',
             cursor: props.loading ? 'default' : 'pointer',
             opacity: props.loading ? 0.7 : 1,
-            transition: 'all 0.2s ease-in-out'
+            transition: 'all 0.2s ease-in-out',
+            ...shadows.sm
           }}
-          onClick={() => props.pickLocalDirectory(false)}
+          onClick={() => props.pickLocalFiles(true)}
           disabled={props.loading}
         >
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Icon name="folder" size={18} color={colors.text} />
-            <span style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>Select Folder</span>
+            <Icon name="file" size={18} color={colors.text} />
+            <span style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: 0.5 }}>Select Files</span>
           </div>
         </button>
       </div>
-
-      <button
-        style={{
-          width: '100%',
-          backgroundColor: colors.primary,
-          borderRadius: borderRadius.md,
-          padding: props.isMobile ? '12px 16px' : '16px',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: props.loading ? 'default' : 'pointer',
-          opacity: props.loading ? 0.7 : 1,
-          transition: 'all 0.2s ease-in-out',
-          ...shadows.sm
-        }}
-        onClick={() => props.pickLocalDirectory(true)}
-        disabled={props.loading}
-      >
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Icon name="folder" size={18} color={isDark ? '#000' : '#fff'} />
-          <span style={{ color: isDark ? '#000' : '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 }}>Add Folder to Context</span>
-        </div>
-      </button>
 
       <div
         style={{

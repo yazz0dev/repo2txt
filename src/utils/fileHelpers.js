@@ -11,7 +11,7 @@ const getCompiledPatterns = (patternsStr) => {
         if (!trimmed) return null;
         if (trimmed.includes('*')) {
           const escaped = trimmed.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-          return new RegExp(escaped.replace(/\*/g, '.*'));
+          return new RegExp('^' + escaped.replace(/\*/g, '.*') + '$');
         }
         return trimmed;
       })
@@ -36,9 +36,12 @@ export const shouldIgnore = (path, patternsStr = DEFAULT_IGNORE_PATTERNS.join(',
   }
 
   const compiled = getCompiledPatterns(patternsStr);
-  return compiled.some(pattern =>
-    pattern instanceof RegExp ? pattern.test(path) : path.includes(pattern)
-  );
+  return compiled.some(pattern => {
+    if (pattern instanceof RegExp) {
+      return pattern.test(path.split('/').pop());
+    }
+    return path === pattern || path.startsWith(pattern + '/') || path.includes('/' + pattern + '/') || path.endsWith('/' + pattern);
+  });
 };
 
 export const getExtension = (path) => {
