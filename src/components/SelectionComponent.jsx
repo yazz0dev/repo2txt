@@ -145,7 +145,12 @@ const SelectionComponent = ({
       }
     });
 
-    return Array.from(itemsMap.values()).sort((a, b) => a.path.localeCompare(b.path));
+    return Array.from(itemsMap.values()).sort((a, b) => {
+      const typeA = a.type === 'tree' ? 0 : 1;
+      const typeB = b.type === 'tree' ? 0 : 1;
+      if (typeA !== typeB) return typeA - typeB;
+      return a.path.localeCompare(b.path);
+    });
   }, [tree, selectedExtensions]);
 
   const visibleTree = useMemo(() => {
