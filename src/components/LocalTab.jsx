@@ -2,13 +2,7 @@ import React from 'react';
 import { useTheme } from '../hooks/useTheme';
 import Icon from './Icon';
 
-const LocalTab = ({
-  pickLocalDirectory,
-  pickLocalFiles,
-  loading,
-  isDragging,
-  isMobile
-}) => {
+const LocalTab = (props) => {
   const { colors, borderRadius, shadows, isDark } = useTheme();
 
   return (
@@ -22,16 +16,16 @@ const LocalTab = ({
             borderWidth: 1,
             borderColor: colors.border,
             borderStyle: 'solid',
-            padding: isMobile ? '12px 16px' : '16px',
+            padding: props.isMobile ? '12px 16px' : '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: loading ? 'default' : 'pointer',
-            opacity: loading ? 0.7 : 1,
+            cursor: props.loading ? 'default' : 'pointer',
+            opacity: props.loading ? 0.7 : 1,
             transition: 'all 0.2s ease-in-out'
           }}
-          onClick={() => pickLocalFiles(false)}
-          disabled={loading}
+          onClick={() => props.pickLocalFiles(false)}
+          disabled={props.loading}
         >
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Icon name="file" size={18} color={colors.text} />
@@ -47,16 +41,16 @@ const LocalTab = ({
             borderWidth: 1,
             borderColor: colors.border,
             borderStyle: 'solid',
-            padding: isMobile ? '12px 16px' : '16px',
+            padding: props.isMobile ? '12px 16px' : '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: loading ? 'default' : 'pointer',
-            opacity: loading ? 0.7 : 1,
+            cursor: props.loading ? 'default' : 'pointer',
+            opacity: props.loading ? 0.7 : 1,
             transition: 'all 0.2s ease-in-out'
           }}
-          onClick={() => pickLocalDirectory(false)}
-          disabled={loading}
+          onClick={() => props.pickLocalDirectory(false)}
+          disabled={props.loading}
         >
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Icon name="folder" size={18} color={colors.text} />
@@ -70,18 +64,18 @@ const LocalTab = ({
           width: '100%',
           backgroundColor: colors.primary,
           borderRadius: borderRadius.md,
-          padding: isMobile ? '12px 16px' : '16px',
+          padding: props.isMobile ? '12px 16px' : '16px',
           border: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: loading ? 'default' : 'pointer',
-          opacity: loading ? 0.7 : 1,
+          cursor: props.loading ? 'default' : 'pointer',
+          opacity: props.loading ? 0.7 : 1,
           transition: 'all 0.2s ease-in-out',
           ...shadows.sm
         }}
-        onClick={() => pickLocalDirectory(true)}
-        disabled={loading}
+        onClick={() => props.pickLocalDirectory(true)}
+        disabled={props.loading}
       >
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Icon name="folder" size={18} color={isDark ? '#000' : '#fff'} />
@@ -95,9 +89,9 @@ const LocalTab = ({
           marginTop: 8,
           borderWidth: 2,
           borderStyle: 'dashed',
-          borderColor: isDragging ? colors.primary : colors.border,
+          borderColor: props.isDragging ? colors.primary : colors.border,
           borderRadius: borderRadius.md,
-          backgroundColor: isDragging ? (isDark ? 'rgba(0,112,243,0.1)' : 'rgba(0,112,243,0.05)') : colors.surface,
+          backgroundColor: props.isDragging ? (isDark ? 'rgba(0,112,243,0.1)' : 'rgba(0,112,243,0.05)') : colors.surface,
           padding: 32,
           display: 'flex',
           flexDirection: 'column',
@@ -108,14 +102,14 @@ const LocalTab = ({
           boxSizing: 'border-box'
         }}
       >
-        <Icon name="upload" size={24} color={isDragging ? colors.text : colors.textPlaceholder} />
+        <Icon name="upload" size={24} color={props.isDragging ? colors.text : colors.textPlaceholder} />
         <span style={{
-          color: isDragging ? colors.text : colors.textPlaceholder,
+          color: props.isDragging ? colors.text : colors.textPlaceholder,
           fontSize: 14,
           fontWeight: '600',
           textAlign: 'center'
         }}>
-          {isDragging ? 'Drop files here to add' : 'Drag and drop files or folders here'}
+          {props.isDragging ? 'Drop files here to add' : 'Drag and drop files or folders here'}
         </span>
       </div>
     </div>

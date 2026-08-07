@@ -1,95 +1,95 @@
-import React, { useMemo, memo } from 'react';
+import React, { memo } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import Icon from './Icon';
 
-const OutputSection = ({ output, tokenCount, onCopy, onDownload, isMobile }) => {
-  const { colors, borderRadius, spacing, shadows, isDark } = useTheme();
+const OutputSection = ({ outputBatches, activeBatchIndex, setActiveBatchIndex, isMobile }) => {
+  const { colors, borderRadius, shadows } = useTheme();
 
-  if (!output) return null;
+  if (!outputBatches || outputBatches.length === 0) return null;
+
+  const currentBatch = outputBatches[activeBatchIndex];
+  if (!currentBatch) return null;
+
+  const copyCurrentBatch = async () => {
+    try {
+      await navigator.clipboard.writeText(currentBatch.text);
+      window.alert(`Part ${currentBatch.part} copied to clipboard!`);
+    } catch {
+      window.alert('Failed to copy');
+    }
+  };
+
+  const downloadCurrentBatch = () => {
+    const blob = new Blob([currentBatch.text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `repointxt_part_${currentBatch.part}_of_${currentBatch.totalParts}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div style={{ backgroundColor: colors.card, borderRadius: 12, padding: isMobile ? 12 : 20, display: 'flex', flexDirection: 'column', ...shadows.lg, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', marginBottom: spacing.md, gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-          <div style={{ flex: 1, marginBottom: isMobile ? 12 : 0 }}>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Icon name="content-copy" size={18} color={colors.text} />
-              <span style={{ color: colors.text, fontSize: 18, fontWeight: '800', letterSpacing: -0.5 }}>Bundle Output</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <span style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>CHARS:</span>
-                <span style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>{output.length.toLocaleString()}</span>
-              </div>
-              <div style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
-              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <span style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>EST. TOKENS:</span>
-                <span style={{ color: colors.primary, fontSize: 13, fontWeight: '800' }}>~{tokenCount.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+    <div style={{ backgroundColor: colors.card, borderRadius: borderRadius.xl, padding: isMobile ? 12 : 20, border: `1px solid ${colors.border}`, ...shadows.md }}>
 
-          <div style={{ display: 'flex', flexDirection: 'row', gap: 8, alignSelf: 'flex-start' }}>
-            <button
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 6,
-                padding: '10px 16px',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                border: 'none',
-                cursor: 'pointer',
-                ...shadows.sm
-              }}
-              onClick={onCopy}
-            >
-              <Icon name="content-copy" size={16} color={isDark ? '#000' : '#fff'} />
-              {!isMobile && <span style={{ color: isDark ? '#000' : '#fff', fontSize: 13, fontWeight: '700' }}>Copy All</span>}
-            </button>
-            <button
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 6,
-                padding: '10px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderStyle: 'solid',
-                cursor: 'pointer'
-              }}
-              onClick={onDownload}
-            >
-              <Icon name="download" size={16} color={colors.text} />
-            </button>
+      {/* Top Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="content-copy" size={18} color={colors.primary} />
+            <span style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>
+              Generated Prompt Bundle {currentBatch.totalParts > 1 ? `(Part ${currentBatch.part} of ${currentBatch.totalParts})` : ''}
+            </span>
           </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 12 }}>
+            <span style={{ color: colors.textSecondary }}>Chars: <strong style={{ color: colors.text }}>{currentBatch.charCount.toLocaleString()}</strong></span>
+            <span style={{ color: colors.textSecondary }}>Est. Tokens: <strong style={{ color: colors.primary }}>~{currentBatch.tokenCount.toLocaleString()}</strong></span>
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            style={{ backgroundColor: colors.primary, color: '#ffffff', padding: '8px 14px', borderRadius: 6, border: 'none', fontWeight: '700', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={copyCurrentBatch}
+          >
+            <Icon name="content-copy" size={14} color="#ffffff" />
+            <span>Copy Part {currentBatch.part}</span>
+          </button>
+          <button
+            style={{ backgroundColor: colors.surface, color: colors.text, padding: '8px 12px', borderRadius: 6, border: `1px solid ${colors.border}`, fontWeight: '700', fontSize: 13, cursor: 'pointer' }}
+            onClick={downloadCurrentBatch}
+          >
+            <Icon name="download" size={14} color={colors.text} />
+          </button>
         </div>
       </div>
 
-      <div style={{
-        backgroundColor: colors.surface,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderStyle: 'solid',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <div style={{ padding: 16, maxHeight: 400, overflowY: 'auto' }}>
-          <pre style={{
-            color: colors.text,
-            fontSize: 12,
-            lineHeight: 1.6,
-            fontFamily: 'monospace',
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word'
-          }}>
-            {output}
+      {/* Batch Tabs if output is multi-part */}
+      {outputBatches.length > 1 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
+          {outputBatches.map((b, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveBatchIndex(idx)}
+              style={{
+                padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: '700', cursor: 'pointer',
+                backgroundColor: activeBatchIndex === idx ? colors.primary : colors.surface,
+                color: activeBatchIndex === idx ? '#ffffff' : colors.text,
+                border: `1px solid ${activeBatchIndex === idx ? colors.primary : colors.border}`
+              }}
+            >
+              Part {b.part} ({Math.round(b.tokenCount / 1000)}k tokens)
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Code Text Output Container */}
+      <div style={{ backgroundColor: colors.background, borderRadius: borderRadius.md, border: `1px solid ${colors.border}`, overflow: 'hidden' }}>
+        <div style={{ padding: 14, maxHeight: 420, overflowY: 'auto' }}>
+          <pre style={{ margin: 0, fontSize: 12, fontFamily: 'monospace', lineHeight: 1.5, color: colors.text, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {currentBatch.text}
           </pre>
         </div>
       </div>
