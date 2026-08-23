@@ -17,7 +17,6 @@ export const useRepoManager = () => {
   const [preamble, setPreamble] = useState('');
   const [removeComments, setRemoveComments] = useState(true);
   const [removeExtraWhitespace, setRemoveExtraWhitespace] = useState(true);
-  const [codingMode, setCodingMode] = useState(false);
   const [maxContextTokens, setMaxContextTokens] = useState(128000); // Default 128K
   const [maxFileSize, setMaxFileSize] = useState('250'); // 250KB limit per file
   const [activeTab, setActiveTab] = useState('github');
@@ -50,7 +49,6 @@ export const useRepoManager = () => {
       if (settings.ignorePatterns) setIgnorePatterns(settings.ignorePatterns);
       if (settings.removeComments !== undefined) setRemoveComments(settings.removeComments);
       if (settings.removeExtraWhitespace !== undefined) setRemoveExtraWhitespace(settings.removeExtraWhitespace);
-      if (settings.codingMode !== undefined) setCodingMode(settings.codingMode);
       if (settings.maxContextTokens !== undefined) setMaxContextTokens(settings.maxContextTokens);
       if (settings.maxFileSize) setMaxFileSize(settings.maxFileSize);
     }
@@ -61,12 +59,11 @@ export const useRepoManager = () => {
       ignorePatterns,
       removeComments,
       removeExtraWhitespace,
-      codingMode,
       maxContextTokens,
       maxFileSize
     });
     saveGitHubToken(githubToken);
-  }, [ignorePatterns, removeComments, removeExtraWhitespace, codingMode, maxContextTokens, maxFileSize, githubToken]);
+  }, [ignorePatterns, removeComments, removeExtraWhitespace, maxContextTokens, maxFileSize, githubToken]);
 
   const treeData = useMemo(() => {
     const allItems = [];
@@ -159,7 +156,6 @@ export const useRepoManager = () => {
       const validTreeItems = treeDataResult.tree.filter(i => {
         if (i.type !== 'blob') return false;
         if (shouldIgnore(i.path, ignorePatterns)) return false;
-        if (codingMode && !isCodeFile(i.path)) return false;
         return true;
       });
 
@@ -169,7 +165,7 @@ export const useRepoManager = () => {
         name: cleanRepo,
         owner, repo: cleanRepo, branch: targetBranch,
         tree: validTreeItems,
-        selectedFiles: smartSelectFiles(validTreeItems, codingMode)
+        selectedFiles: smartSelectFiles(validTreeItems)
       };
 
       setSources(prev => isAdding ? [...prev, newSource] : [newSource]);
@@ -182,7 +178,7 @@ export const useRepoManager = () => {
       setLoading(false);
       setLoadingMessage('');
     }
-  }, [githubUrl, githubBranch, githubToken, ignorePatterns, codingMode]);
+  }, [githubUrl, githubBranch, githubToken, ignorePatterns]);
 
   const pickLocalDirectory = useCallback(async (isAdding = false) => {
     if (!window.showDirectoryPicker) {
@@ -205,11 +201,9 @@ export const useRepoManager = () => {
             }
           } else if (entry.kind === 'file') {
             if (!shouldIgnore(entryPath, ignorePatterns)) {
-              if (!codingMode || isCodeFile(entryPath)) {
-                const fileObj = await entry.getFile();
-                if (fileObj.size <= Number(maxFileSize) * 1024) {
-                  files.push({ path: entryPath, size: fileObj.size, url: createTrackedBlobUrl(fileObj), file: fileObj });
-                }
+              const fileObj = await entry.getFile();
+              if (fileObj.size <= Number(maxFileSize) * 1024) {
+                files.push({ path: entryPath, size: fileObj.size, url: createTrackedBlobUrl(fileObj), file: fileObj });
               }
             }
           }
@@ -224,7 +218,7 @@ export const useRepoManager = () => {
         type: 'local',
         name: handle.name,
         tree: treeItems,
-        selectedFiles: smartSelectFiles(treeItems, codingMode)
+        selectedFiles: smartSelectFiles(treeItems)
       };
 
       setSources(prev => isAdding ? [...prev, newSource] : [newSource]);
@@ -234,7 +228,7 @@ export const useRepoManager = () => {
       setLoading(false);
       setLoadingMessage('');
     }
-  }, [ignorePatterns, codingMode, maxFileSize, createTrackedBlobUrl]);
+  }, [ignorePatterns, maxFileSize, createTrackedBlobUrl]);
 
   const pickLocalFiles = useCallback(async (isAdding = false) => {
     const input = document.createElement('input');
@@ -249,7 +243,7 @@ export const useRepoManager = () => {
       try {
         const selected = Array.from(e.target.files);
         const files = selected
-          .filter(f => !shouldIgnore(f.name, ignorePatterns) && (!codingMode || isCodeFile(f.name)))
+          .filter(f => !shouldIgnore(f.name, ignorePatterns))
           .map((f, i) => ({
             path: f.name,
             type: 'blob',
@@ -264,7 +258,7 @@ export const useRepoManager = () => {
           type: 'local',
           name: 'Files Batch',
           tree: files,
-          selectedFiles: smartSelectFiles(files, codingMode)
+          selectedFiles: smartSelectFiles(files)
         };
 
         setSources(prev => isAdding ? [...prev, newSource] : [newSource]);
@@ -276,7 +270,7 @@ export const useRepoManager = () => {
       }
     };
     input.click();
-  }, [ignorePatterns, codingMode, createTrackedBlobUrl]);
+  }, [ignorePatterns, createTrackedBlobUrl]);
 
   const generateText = useCallback(async () => {
     if (sources.length === 0 || selectedFiles.length === 0) return;
@@ -371,7 +365,7 @@ export const useRepoManager = () => {
     outputBatches, activeBatchIndex, setActiveBatchIndex, isDragging,
     ignorePatterns, setIgnorePatterns, preamble, setPreamble,
     removeComments, setRemoveComments, removeExtraWhitespace, setRemoveExtraWhitespace,
-    codingMode, setCodingMode, maxContextTokens, setMaxContextTokens,
+    maxContextTokens, setMaxContextTokens,
     maxFileSize, setMaxFileSize, activeTab, setActiveTab,
     fetchGitHubRepo, pickLocalDirectory, pickLocalFiles, generateText, removeSource,
     treeData, selectedFiles, setSelectedFiles,
@@ -389,7 +383,7 @@ export const useRepoManager = () => {
       try {
         const droppedFiles = Array.from(e.dataTransfer.files);
         const valid = droppedFiles
-          .filter(f => !shouldIgnore(f.name, ignorePatterns) && (!codingMode || isCodeFile(f.name)))
+          .filter(f => !shouldIgnore(f.name, ignorePatterns))
           .map((f, i) => ({
             path: f.name,
             type: 'blob',
@@ -405,7 +399,7 @@ export const useRepoManager = () => {
             type: 'local',
             name: 'Dropped Items',
             tree: valid,
-            selectedFiles: smartSelectFiles(valid, codingMode)
+            selectedFiles: smartSelectFiles(valid)
           };
           setSources(prev => [...prev, newSource]);
         }

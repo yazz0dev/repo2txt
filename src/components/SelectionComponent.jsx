@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useCallback, memo } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, memo } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { getExtension, isCodeFile } from '../utils/fileHelpers';
+import { getExtension } from '../utils/fileHelpers';
 import Icon from './Icon';
 
-const TreeItem = memo(({ item, level, isExpanded, onToggle, isSelected, onSelect }) => {
+const TreeItem = memo(({ item, level, isExpanded, onToggle, selectionState, onSelect }) => {
   const { colors } = useTheme();
   const isFile = item.type === 'blob';
 
@@ -11,30 +11,37 @@ const TreeItem = memo(({ item, level, isExpanded, onToggle, isSelected, onSelect
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '3px 0', minHeight: 28 }}>
         {Array.from({ length: level }).map((_, i) => (
-          <div key={`indent-${i}`} style={{ width: 14, height: '100%', borderLeft: `1px solid ${colors.border}` }} />
+          <div key={`indent-${i}`} style={{ width: 14, height: '100%', borderLeft: `1px solid ${colors.border}`, marginRight: 2 }} />
         ))}
 
         <button
-          style={{ width: 20, height: 20, alignItems: 'center', justifyContent: 'center', display: 'flex', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{
+            width: 20, height: 20, alignItems: 'center', justifyContent: 'center', display: 'flex',
+            background: 'none', border: 'none', cursor: isFile ? 'default' : 'pointer', padding: 0
+          }}
           onClick={() => !isFile && onToggle(item.path)}
         >
           {!isFile && <Icon name={isExpanded ? "chevron-down" : "chevron-right"} size={12} color={colors.textSecondary} />}
         </button>
 
         <button
-          style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, padding: '3px 6px', borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+          style={{
+            display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, padding: '3px 6px',
+            borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left'
+          }}
           onClick={() => onSelect(item)}
         >
           <div style={{
             width: 14, height: 14, borderRadius: 3,
-            border: `1px solid ${isSelected ? colors.primary : colors.border}`,
-            backgroundColor: isSelected ? colors.primary : 'transparent',
-            alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: 8
+            border: `1px solid ${selectionState !== 'none' ? colors.primary : colors.border}`,
+            backgroundColor: selectionState !== 'none' ? colors.primary : 'transparent',
+            alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: 8, flexShrink: 0
           }}>
-            {isSelected && <Icon name="check" size={10} color="#ffffff" />}
+            {selectionState === 'full' && <Icon name="check" size={10} color="#ffffff" />}
+            {selectionState === 'partial' && <Icon name="minus" size={10} color="#ffffff" />}
           </div>
 
-          <Icon name={isFile ? "file" : "folder"} size={14} color={isFile ? colors.textSecondary : colors.primary} style={{ marginRight: 6 }} />
+          <Icon name={isFile ? "file" : "folder"} size={14} color={isFile ? colors.textSecondary : colors.primary} style={{ marginRight: 6, flexShrink: 0 }} />
 
           <span style={{ fontSize: 13, color: colors.text, fontWeight: isFile ? '400' : '600' }} className="truncate">
             {item.name}
@@ -50,14 +57,124 @@ const SelectionComponent = ({
   onGenerate, loading, removeSource, preamble, setPreamble, isMobile
 }) => {
   const { colors, borderRadius, shadows } = useTheme();
-  const [expandedDirs, setExpandedDirs] = useState(new Set(['']));
+  const [expandedDirs, setExpandedDirs] = useState(new Set());
   const [selectedExtensions, setSelectedExtensions] = useState(new Set());
 
-  const toggleDir = useCallback((path) => {
+  // Map of selected files for O(1) lookup
+  const selectedKeySet = useMemo(() => {
+    const set = new Set();
+    if (selectedFiles) {
+      selectedFiles.forEach(f => set.add(`${f.sourceId}:${f.path}`));
+    }
+    return set;
+  }, [selectedFiles]);
+
+  // Group blobs and folders hierarchically
+  const { hierarchyFlat, sourceFolderMap } = useMemo(() => {
+    if (!tree) return { hierarchyFlat: [], sourceFolderMap: new Map() };
+
+    let blobs = tree.filter(f => f.type === 'blob');
+
+    if (selectedExtensions.size > 0) {
+      blobs = blobs.filter(f => selectedExtensions.has(getExtension(f.name || f.path).toLowerCase()));
+    }
+
+    // parentKey -> { folders: Map(path -> folderObj), files: array }
+    const childrenMap = new Map();
+    // folderKey -> array of descendant blob files
+    const folderDescendants = new Map();
+
+    blobs.forEach(file => {
+      const parts = file.path.split('/');
+      const fileName = parts.pop();
+      const level = parts.length;
+      const fileParentPath = parts.join('/');
+      const parentKey = `${file.sourceId}:${fileParentPath}`;
+
+      if (!childrenMap.has(parentKey)) {
+        childrenMap.set(parentKey, { folders: new Map(), files: [] });
+      }
+      childrenMap.get(parentKey).files.push({
+        ...file, type: 'blob', name: fileName, level
+      });
+
+      // Register parent folders
+      for (let i = 0; i < parts.length; i++) {
+        const folderPath = parts.slice(0, i + 1).join('/');
+        const folderParentPath = parts.slice(0, i).join('/');
+        const folderKey = `${file.sourceId}:${folderPath}`;
+        const folderParentKey = `${file.sourceId}:${folderParentPath}`;
+
+        if (!childrenMap.has(folderParentKey)) {
+          childrenMap.set(folderParentKey, { folders: new Map(), files: [] });
+        }
+
+        if (!childrenMap.get(folderParentKey).folders.has(folderPath)) {
+          childrenMap.get(folderParentKey).folders.set(folderPath, {
+            sourceId: file.sourceId,
+            path: folderPath,
+            name: parts[i],
+            type: 'tree',
+            level: i
+          });
+        }
+
+        if (!folderDescendants.has(folderKey)) {
+          folderDescendants.set(folderKey, []);
+        }
+        folderDescendants.get(folderKey).push(file);
+      }
+    });
+
+    // Build hierarchical flat list
+    const result = [];
+
+    const processParent = (parentKey) => {
+      const group = childrenMap.get(parentKey);
+      if (!group) return;
+
+      // Sort subfolders alphabetically
+      const sortedFolders = Array.from(group.folders.values()).sort((a, b) => a.name.localeCompare(b.name));
+      // Sort files alphabetically
+      const sortedFiles = group.files.sort((a, b) => a.name.localeCompare(b.name));
+
+      for (const folder of sortedFolders) {
+        result.push(folder);
+        processParent(`${folder.sourceId}:${folder.path}`);
+      }
+
+      for (const file of sortedFiles) {
+        result.push(file);
+      }
+    };
+
+    // Get all source root keys
+    const sourceIds = new Set(blobs.map(b => b.sourceId));
+    sourceIds.forEach(sId => processParent(`${sId}:`));
+
+    return { hierarchyFlat: result, sourceFolderMap: folderDescendants };
+  }, [tree, selectedExtensions]);
+
+  // Auto-expand top-level directories when hierarchy changes
+  useEffect(() => {
+    if (hierarchyFlat.length > 0) {
+      setExpandedDirs(prev => {
+        const next = new Set(prev);
+        hierarchyFlat.forEach(item => {
+          if (item.type === 'tree' && item.level <= 1) {
+            next.add(`${item.sourceId}:${item.path}`);
+          }
+        });
+        return next;
+      });
+    }
+  }, [hierarchyFlat]);
+
+  const toggleDir = useCallback((pathKey) => {
     setExpandedDirs(prev => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+      if (next.has(pathKey)) next.delete(pathKey);
+      else next.add(pathKey);
       return next;
     });
   }, []);
@@ -69,23 +186,61 @@ const SelectionComponent = ({
         return exists ? prev.filter(f => !(f.path === item.path && f.sourceId === item.sourceId)) : [...prev, item];
       });
     } else {
-      const prefix = item.path + '/';
-      const children = tree.filter(f => f.type === 'blob' && f.path.startsWith(prefix) && f.sourceId === item.sourceId);
+      const folderKey = `${item.sourceId}:${item.path}`;
+      const children = sourceFolderMap.get(folderKey) || [];
+      if (children.length === 0) return;
 
       setSelectedFiles(prev => {
-        const selectedKeys = new Set(prev.map(f => `${f.sourceId}:${f.path}`));
-        const allSelected = children.every(c => selectedKeys.has(`${c.sourceId}:${c.path}`));
+        const currentKeys = new Set(prev.map(f => `${f.sourceId}:${f.path}`));
+        const allSelected = children.every(c => currentKeys.has(`${c.sourceId}:${c.path}`));
 
         if (allSelected) {
-          const childKeys = new Set(children.map(c => `${c.sourceId}:${c.path}`));
-          return prev.filter(f => !childKeys.has(`${f.sourceId}:${f.path}`));
+          const childKeySet = new Set(children.map(c => `${c.sourceId}:${c.path}`));
+          return prev.filter(f => !childKeySet.has(`${f.sourceId}:${f.path}`));
         } else {
-          const toAdd = children.filter(c => !selectedKeys.has(`${c.sourceId}:${c.path}`));
+          const toAdd = children.filter(c => !currentKeys.has(`${c.sourceId}:${c.path}`));
           return [...prev, ...toAdd];
         }
       });
     }
-  }, [tree, setSelectedFiles]);
+  }, [sourceFolderMap, setSelectedFiles]);
+
+  const visibleTree = useMemo(() => {
+    return hierarchyFlat.filter(item => {
+      const parts = item.path.split('/');
+      if (parts.length === 1) return true;
+
+      let currentPath = '';
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
+        if (!expandedDirs.has(`${item.sourceId}:${currentPath}`)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [hierarchyFlat, expandedDirs]);
+
+  const getItemSelectionState = useCallback((item) => {
+    if (item.type === 'blob') {
+      return selectedKeySet.has(`${item.sourceId}:${item.path}`) ? 'full' : 'none';
+    } else {
+      const folderKey = `${item.sourceId}:${item.path}`;
+      const descendants = sourceFolderMap.get(folderKey) || [];
+      if (descendants.length === 0) return 'none';
+
+      let selectedCount = 0;
+      for (const d of descendants) {
+        if (selectedKeySet.has(`${d.sourceId}:${d.path}`)) {
+          selectedCount++;
+        }
+      }
+
+      if (selectedCount === descendants.length) return 'full';
+      if (selectedCount > 0) return 'partial';
+      return 'none';
+    }
+  }, [selectedKeySet, sourceFolderMap]);
 
   // Apply Quick Presets
   const applyPreset = (type) => {
@@ -96,71 +251,14 @@ const SelectionComponent = ({
       setSelectedFiles(blobs);
     } else if (type === 'none') {
       setSelectedFiles([]);
-    } else if (type === 'code') {
-      setSelectedFiles(blobs.filter(f => isCodeFile(f.path)));
     } else if (type === 'core') {
       // Core logic directories like src/, lib/, app/, pkg/
       setSelectedFiles(blobs.filter(f => {
         const lower = f.path.toLowerCase();
-        return (lower.startsWith('src/') || lower.startsWith('app/') || lower.startsWith('lib/') || lower.startsWith('pkg/')) && isCodeFile(f.path);
+        return lower.startsWith('src/') || lower.startsWith('app/') || lower.startsWith('lib/') || lower.startsWith('pkg/');
       }));
     }
   };
-
-  const fileExtensions = useMemo(() => {
-    if (!tree) return [];
-    const exts = new Set();
-    tree.forEach(item => {
-      if (item.type === 'blob') {
-        const ext = getExtension(item.name || item.path);
-        if (ext) exts.add(ext.toLowerCase());
-      }
-    });
-    return Array.from(exts).sort();
-  }, [tree]);
-
-  const hierarchy = useMemo(() => {
-    if (!tree) return [];
-    let blobs = tree.filter(f => f.type === 'blob');
-
-    if (selectedExtensions.size > 0) {
-      blobs = blobs.filter(f => selectedExtensions.has(getExtension(f.name || f.path).toLowerCase()));
-    }
-
-    const itemsMap = new Map();
-    blobs.forEach(file => {
-      itemsMap.set(`${file.sourceId}:${file.path}`, {
-        ...file, type: 'blob', name: file.path.split('/').pop(), level: file.path.split('/').length - 1
-      });
-
-      const parts = file.path.split('/');
-      for (let i = 1; i < parts.length; i++) {
-        const folderPath = parts.slice(0, i).join('/');
-        const folderKey = `${file.sourceId}:${folderPath}`;
-        if (!itemsMap.has(folderKey)) {
-          itemsMap.set(folderKey, {
-            sourceId: file.sourceId, path: folderPath, name: parts[i - 1], type: 'tree', level: i - 1
-          });
-        }
-      }
-    });
-
-    return Array.from(itemsMap.values()).sort((a, b) => {
-      const typeA = a.type === 'tree' ? 0 : 1;
-      const typeB = b.type === 'tree' ? 0 : 1;
-      if (typeA !== typeB) return typeA - typeB;
-      return a.path.localeCompare(b.path);
-    });
-  }, [tree, selectedExtensions]);
-
-  const visibleTree = useMemo(() => {
-    return hierarchy.filter(item => {
-      const parts = item.path.split('/');
-      if (parts.length === 1) return true;
-      const parentPath = parts.slice(0, -1).join('/');
-      return expandedDirs.has(`${item.sourceId}:${parentPath}`);
-    });
-  }, [hierarchy, expandedDirs]);
 
   const selectedCount = selectedFiles?.length || 0;
   const totalCount = tree?.filter(i => i.type === 'blob').length || 0;
@@ -183,9 +281,6 @@ const SelectionComponent = ({
         <div style={{ display: 'flex', gap: 6 }}>
           <button onClick={() => applyPreset('core')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.primary, cursor: 'pointer' }}>
             🎯 Core Logic
-          </button>
-          <button onClick={() => applyPreset('code')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.text, cursor: 'pointer' }}>
-            ⚡ Code Only
           </button>
           <button onClick={() => applyPreset('all')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.text, cursor: 'pointer' }}>
             All
@@ -219,7 +314,7 @@ const SelectionComponent = ({
               level={item.level}
               isExpanded={expandedDirs.has(`${item.sourceId}:${item.path}`)}
               onToggle={(p) => toggleDir(`${item.sourceId}:${p}`)}
-              isSelected={item.type === 'blob' ? selectedFiles.some(f => f.path === item.path && f.sourceId === item.sourceId) : false}
+              selectionState={getItemSelectionState(item)}
               onSelect={toggleSelect}
             />
           ))}
