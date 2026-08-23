@@ -23,7 +23,7 @@ export default function App() {
     outputBatches, activeBatchIndex, setActiveBatchIndex, isDragging,
     ignorePatterns, setIgnorePatterns, preamble, setPreamble,
     removeComments, setRemoveComments, removeExtraWhitespace, setRemoveExtraWhitespace,
-    codingMode, setCodingMode, maxContextTokens, setMaxContextTokens,
+    maxContextTokens, setMaxContextTokens,
     maxFileSize, setMaxFileSize, activeTab, setActiveTab,
     fetchGitHubRepo, pickLocalDirectory, pickLocalFiles, generateText, removeSource,
     treeData, selectedFiles, setSelectedFiles,
@@ -75,7 +75,6 @@ export default function App() {
           urlHistory={urlHistory} ignorePatterns={ignorePatterns} setIgnorePatterns={setIgnorePatterns}
           removeComments={removeComments} setRemoveComments={setRemoveComments}
           removeExtraWhitespace={removeExtraWhitespace} setRemoveExtraWhitespace={setRemoveExtraWhitespace}
-          codingMode={codingMode} setCodingMode={setCodingMode}
           maxContextTokens={maxContextTokens} setMaxContextTokens={setMaxContextTokens}
           maxFileSize={maxFileSize} setMaxFileSize={setMaxFileSize}
           loading={loading} fetchGitHubRepo={fetchGitHubRepo}

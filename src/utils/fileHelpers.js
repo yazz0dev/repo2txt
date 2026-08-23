@@ -24,11 +24,16 @@ const getCompiledPatterns = (patternsStr) => {
 export const shouldIgnore = (path, patternsStr = DEFAULT_IGNORE_PATTERNS.join(', ')) => {
   if (!path) return true;
 
+  // Check for hidden files/folders (any segment starting with '.')
+  const parts = path.split('/');
+  if (parts.some(p => p.startsWith('.'))) {
+    return true;
+  }
+
   // Hard safety check for critical freeze vectors
   const lower = path.toLowerCase();
   if (
     lower.includes('node_modules/') || lower.startsWith('node_modules') ||
-    lower.includes('/.git/') || lower.startsWith('.git') ||
     lower.includes('/target/') || lower.includes('/vendor/') ||
     lower.includes('/dist/') || lower.includes('/build/')
   ) {
@@ -38,7 +43,7 @@ export const shouldIgnore = (path, patternsStr = DEFAULT_IGNORE_PATTERNS.join(',
   const compiled = getCompiledPatterns(patternsStr);
   return compiled.some(pattern => {
     if (pattern instanceof RegExp) {
-      return pattern.test(path.split('/').pop());
+      return pattern.test(parts[parts.length - 1]);
     }
     return path === pattern || path.startsWith(pattern + '/') || path.includes('/' + pattern + '/') || path.endsWith('/' + pattern);
   });
@@ -64,22 +69,83 @@ export const estimateTokens = (text) => {
   return Math.ceil(text.length / 3.8);
 };
 
-export const smartSelectFiles = (treeItems, codingMode = false) => {
-  const filePaths = treeItems.map(item => item.path);
+export const smartSelectFiles = (treeItems) => {
+  if (!treeItems || treeItems.length === 0) return [];
 
-  return treeItems.filter(item => {
+  const validBlobs = treeItems.filter(item => {
+    if (item.type && item.type !== 'blob') return false;
     if (shouldIgnore(item.path)) return false;
-
-    // In Coding Mode, exclude non-source files
-    if (codingMode && !isCodeFile(item.path)) {
-      return false;
-    }
-
-    // Skip root-level huge files or generated assets
     if (item.size && item.size > 250 * 1024) return false;
-
     return true;
   });
+
+  if (validBlobs.length === 0) return [];
+
+  // Check for Flutter project
+  const isFlutter = validBlobs.some(item => {
+    const filename = item.path.split('/').pop().toLowerCase();
+    return filename === 'pubspec.yaml' || filename === 'pubspec.yml';
+  });
+
+  if (isFlutter) {
+    const flutterSelected = validBlobs.filter(item => {
+      const filename = item.path.split('/').pop().toLowerCase();
+      if (filename === 'pubspec.yaml' || filename === 'pubspec.yml') return true;
+
+      const parts = item.path.toLowerCase().split('/');
+      return parts.includes('lib');
+    });
+
+    if (flutterSelected.length > 0) {
+      return flutterSelected;
+    }
+  }
+
+  // Check for Node / Bun project
+  const isNodeBun = validBlobs.some(item => {
+    const filename = item.path.split('/').pop().toLowerCase();
+    return filename === 'package.json';
+  });
+
+  if (isNodeBun) {
+    const nodeSelected = validBlobs.filter(item => {
+      const filename = item.path.split('/').pop().toLowerCase();
+      if (filename === 'package.json') return true;
+
+      const parts = item.path.toLowerCase().split('/');
+      const inSrc = parts.includes('src');
+      const inFunctions = parts.includes('functions') || parts.includes('function') || parts.includes('api');
+
+      return inSrc || inFunctions;
+    });
+
+    if (nodeSelected.length > 0) {
+      return nodeSelected;
+    }
+  }
+
+  // Fallback for general projects: select core directories & config files
+  const coreSelected = validBlobs.filter(item => {
+    const lower = item.path.toLowerCase();
+    const parts = lower.split('/');
+    if (parts.length > 1) {
+      const topDir = parts[0];
+      if (['src', 'lib', 'app', 'pages', 'functions', 'function', 'pkg', 'api', 'core'].includes(topDir)) {
+        return true;
+      }
+    }
+    const filename = item.path.split('/').pop().toLowerCase();
+    if (['package.json', 'cargo.toml', 'pubspec.yaml', 'go.mod', 'pyproject.toml', 'requirements.txt', 'index.html'].includes(filename)) {
+      return true;
+    }
+    return false;
+  });
+
+  if (coreSelected.length > 0) {
+    return coreSelected;
+  }
+
+  return validBlobs;
 };
 
 export const chunkFilesByTokenLimit = (files, maxTokens = 128000) => {

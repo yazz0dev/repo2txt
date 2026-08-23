@@ -8,7 +8,6 @@ import BubbleInput from './BubbleInput';
 const ProcessingOptions = ({
   removeComments, setRemoveComments,
   removeExtraWhitespace, setRemoveExtraWhitespace,
-  codingMode, setCodingMode,
   maxContextTokens, setMaxContextTokens,
   maxFileSize, setMaxFileSize,
   ignorePatterns, setIgnorePatterns
@@ -61,11 +60,6 @@ const ProcessingOptions = ({
 
           {/* Mode Checkboxes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Checkbox
-              label="Coding Mode (Exclude Markdown, Lockfiles, Docs, CSS)"
-              checked={codingMode}
-              onChange={setCodingMode}
-            />
             <Checkbox
               label="Remove Single & Multi-line Code Comments"
               checked={removeComments}
