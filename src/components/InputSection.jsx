@@ -58,11 +58,12 @@ const InputSection = (props) => {
         width: '100%',
         backgroundColor: props.isDragging ? colors.surface : colors.card,
         borderRadius: borderRadius.xl,
-        padding: props.isMobile ? 12 : 24,
-        borderColor: props.isDragging ? colors.primary : 'transparent',
-        borderWidth: props.isDragging ? 1 : 0,
+        padding: props.isMobile ? 16 : 24,
+        borderColor: props.isDragging ? colors.primary : colors.border,
+        borderWidth: 1,
         borderStyle: 'solid',
         boxSizing: 'border-box',
+        transition: 'all 0.2s ease',
         ...shadows.md
       }}
     >

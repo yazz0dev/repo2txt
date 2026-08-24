@@ -34,35 +34,48 @@ export default function App() {
     <div style={{ minHeight: '100vh', backgroundColor: colors.background, color: colors.text, display: 'flex', flexDirection: 'column' }}>
 
       {/* Top Header */}
-      <header style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: '16px 20px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: '900', fontSize: 24, letterSpacing: -1, color: colors.text }}>
+      <header style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: '14px 24px', position: 'sticky', top: 0, zIndex: 10, backdropFilter: 'blur(8px)' }}>
+        <div style={{ maxWidth: 1020, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: colors.primaryGradient }}>
+              <Icon name="zap" size={18} color="#ffffff" />
+            </div>
+            <span style={{ fontWeight: '900', fontSize: 22, letterSpacing: -0.5, color: colors.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
               repoin<span style={{ color: colors.primary }}>t</span>xt
             </span>
-            <span style={{ fontSize: 10, fontWeight: '800', backgroundColor: colors.primary + '20', color: colors.primary, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>
-              PRO
+            <span style={{ fontSize: 10, fontWeight: '800', backgroundColor: colors.primary + '20', color: colors.primary, padding: '3px 8px', borderRadius: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              GEMINI 2.0 & GPT-4o READY
             </span>
           </div>
 
           {/* GitHub Rate Limit Info */}
           {githubRateLimit && (
-            <div style={{ fontSize: 11, color: colors.textSecondary, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Icon name="github" size={12} color={colors.textSecondary} />
-              <span>API Rate: <strong>{githubRateLimit.remaining}</strong>/<strong>{githubRateLimit.limit}</strong></span>
+            <div style={{ fontSize: 11, color: colors.textSecondary, display: 'flex', alignItems: 'center', gap: 6, backgroundColor: colors.surface, padding: '4px 10px', borderRadius: 20, border: `1px solid ${colors.border}` }}>
+              <Icon name="github" size={13} color={colors.textSecondary} />
+              <span>API Rate: <strong>{githubRateLimit.remaining}</strong> / {githubRateLimit.limit}</span>
             </div>
           )}
         </div>
       </header>
 
       {/* Main Container */}
-      <main style={{ flex: 1, maxWidth: 960, width: '100%', margin: '0 auto', padding: isMobile ? '16px 12px 40px' : '28px 20px 40px', boxSizing: 'border-box' }}>
+      <main style={{ flex: 1, maxWidth: 1020, width: '100%', margin: '0 auto', padding: isMobile ? '16px 12px 40px' : '32px 24px 48px', boxSizing: 'border-box' }}>
+
+        {/* Hero Section */}
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: '800', margin: '0 0 6px 0', color: colors.text, letterSpacing: '-0.5px' }}>
+            Pack Repository Context for LLMs
+          </h1>
+          <p style={{ fontSize: 14, color: colors.textSecondary, margin: 0, maxWidth: 540, marginLeft: 'auto', marginRight: 'auto' }}>
+            Convert GitHub repositories or local code into token-split context bundles for Gemini 2.0, Claude 3.5, and ChatGPT.
+          </p>
+        </div>
 
         {/* Loading Overlay / Progress */}
         {loading && (
-          <div style={{ backgroundColor: colors.primary + '15', border: `1px solid ${colors.primary}`, borderRadius: 8, padding: 12, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Icon name="zap" size={16} color={colors.primary} />
-            <span style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{loadingMessage || 'Processing codebase...'}</span>
+          <div style={{ backgroundColor: colors.primary + '18', border: `1px solid ${colors.primary}`, borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 4px 12px rgba(0,85,255,0.15)' }}>
+            <Icon name="zap" size={18} color={colors.primary} />
+            <span style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{loadingMessage || 'Processing codebase...'}</span>
           </div>
         )}
 
