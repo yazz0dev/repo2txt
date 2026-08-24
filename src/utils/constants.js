@@ -53,11 +53,11 @@ export const DEFAULT_IGNORE_PATTERNS = [
 ];
 
 export const LLM_CONTEXT_LIMITS = [
-  { label: 'Auto (No Limit)', value: 0 },
+  { label: '1M (Gemini 1.5 Pro / 2.0 Flash - Default)', value: 1000000 },
+  { label: '200K (Claude 3.5 Sonnet / Opus)', value: 200000 },
+  { label: '128K (GPT-4o / GPT-4o-mini)', value: 128000 },
   { label: '32K (GPT-4)', value: 32000 },
-  { label: '128K (Claude 3.5 Sonnet / GPT-4o)', value: 128000 },
-  { label: '200K (Claude 3 Opus)', value: 200000 },
-  { label: '1M (Gemini 1.5 Pro)', value: 1000000 }
+  { label: 'Auto (No Limit)', value: 0 }
 ];
 
 export const NON_CODE_EXTENSIONS = new Set([

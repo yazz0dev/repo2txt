@@ -17,7 +17,7 @@ export const useRepoManager = () => {
   const [preamble, setPreamble] = useState('');
   const [removeComments, setRemoveComments] = useState(true);
   const [removeExtraWhitespace, setRemoveExtraWhitespace] = useState(true);
-  const [maxContextTokens, setMaxContextTokens] = useState(128000); // Default 128K
+  const [maxContextTokens, setMaxContextTokens] = useState(1000000); // Default 1M (Gemini Context)
   const [maxFileSize, setMaxFileSize] = useState('250'); // 250KB limit per file
   const [activeTab, setActiveTab] = useState('github');
 

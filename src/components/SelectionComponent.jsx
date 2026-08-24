@@ -8,46 +8,45 @@ const TreeItem = memo(({ item, level, isExpanded, onToggle, selectionState, onSe
   const isFile = item.type === 'blob';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '3px 0', minHeight: 28 }}>
-        {Array.from({ length: level }).map((_, i) => (
-          <div key={`indent-${i}`} style={{ width: 14, height: '100%', borderLeft: `1px solid ${colors.border}`, marginRight: 2 }} />
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '2px 0', minHeight: 28, userSelect: 'none' }}>
+      {Array.from({ length: level }).map((_, i) => (
+        <div key={`indent-${i}`} style={{ width: 14, height: 28, borderLeft: `1px solid ${colors.border}`, marginRight: 2, flexShrink: 0 }} />
+      ))}
 
-        <button
-          style={{
-            width: 20, height: 20, alignItems: 'center', justifyContent: 'center', display: 'flex',
-            background: 'none', border: 'none', cursor: isFile ? 'default' : 'pointer', padding: 0
-          }}
-          onClick={() => !isFile && onToggle(item.path)}
-        >
-          {!isFile && <Icon name={isExpanded ? "chevron-down" : "chevron-right"} size={12} color={colors.textSecondary} />}
-        </button>
+      <button
+        style={{
+          width: 20, height: 20, alignItems: 'center', justifyContent: 'center', display: 'flex',
+          background: 'none', border: 'none', cursor: isFile ? 'default' : 'pointer', padding: 0, flexShrink: 0
+        }}
+        onClick={() => !isFile && onToggle(item.path)}
+      >
+        {!isFile && <Icon name={isExpanded ? "chevron-down" : "chevron-right"} size={12} color={colors.textSecondary} />}
+      </button>
 
-        <button
-          style={{
-            display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, padding: '3px 6px',
-            borderRadius: 4, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left'
-          }}
-          onClick={() => onSelect(item)}
-        >
-          <div style={{
-            width: 14, height: 14, borderRadius: 3,
-            border: `1px solid ${selectionState !== 'none' ? colors.primary : colors.border}`,
-            backgroundColor: selectionState !== 'none' ? colors.primary : 'transparent',
-            alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: 8, flexShrink: 0
-          }}>
-            {selectionState === 'full' && <Icon name="check" size={10} color="#ffffff" />}
-            {selectionState === 'partial' && <Icon name="minus" size={10} color="#ffffff" />}
-          </div>
+      <button
+        style={{
+          display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 1, padding: '3px 8px',
+          borderRadius: 6, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', minWidth: 0,
+          transition: 'background 0.1s ease'
+        }}
+        onClick={() => onSelect(item)}
+      >
+        <div style={{
+          width: 15, height: 15, borderRadius: 4,
+          border: `1.5px solid ${selectionState !== 'none' ? colors.primary : colors.border}`,
+          backgroundColor: selectionState !== 'none' ? colors.primary : 'transparent',
+          alignItems: 'center', justifyContent: 'center', display: 'flex', marginRight: 8, flexShrink: 0
+        }}>
+          {selectionState === 'full' && <Icon name="check" size={10} color="#ffffff" />}
+          {selectionState === 'partial' && <Icon name="minus" size={10} color="#ffffff" />}
+        </div>
 
-          <Icon name={isFile ? "file" : "folder"} size={14} color={isFile ? colors.textSecondary : colors.primary} style={{ marginRight: 6, flexShrink: 0 }} />
+        <Icon name={isFile ? "file" : "folder"} size={14} color={isFile ? colors.textSecondary : colors.primary} style={{ marginRight: 8, flexShrink: 0 }} />
 
-          <span style={{ fontSize: 13, color: colors.text, fontWeight: isFile ? '400' : '600' }} className="truncate">
-            {item.name}
-          </span>
-        </button>
-      </div>
+        <span style={{ fontSize: 13, color: colors.text, fontWeight: isFile ? '400' : '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {item.name}
+        </span>
+      </button>
     </div>
   );
 });
@@ -266,26 +265,31 @@ const SelectionComponent = ({
   if (!tree) return null;
 
   return (
-    <div style={{ backgroundColor: colors.card, borderRadius: borderRadius.xl, padding: isMobile ? 14 : 20, border: `1px solid ${colors.border}`, ...shadows.md }}>
+    <div style={{ backgroundColor: colors.card, borderRadius: borderRadius.xl, padding: isMobile ? 16 : 24, border: `1px solid ${colors.border}`, ...shadows.md }}>
 
       {/* Header & Source Tags */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <span style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>Codebase Selection</span>
-          <span style={{ fontSize: 12, color: colors.textSecondary, display: 'block', marginTop: 2 }}>
-            Selected <strong>{selectedCount}</strong> of <strong>{totalCount}</strong> files
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 17, fontWeight: '800', color: colors.text, letterSpacing: -0.3 }}>Codebase Selection</span>
+            <span style={{ fontSize: 11, fontWeight: '800', backgroundColor: colors.primary + '18', color: colors.primary, padding: '2px 8px', borderRadius: 10 }}>
+              {selectedCount} / {totalCount} files
+            </span>
+          </div>
+          <span style={{ fontSize: 12, color: colors.textSecondary, display: 'block', marginTop: 3 }}>
+            Toggle individual files or use quick preset filters below
           </span>
         </div>
 
         {/* Preset Buttons */}
         <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={() => applyPreset('core')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.primary, cursor: 'pointer' }}>
+          <button onClick={() => applyPreset('core')} style={{ padding: '6px 12px', fontSize: 12, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.primary + '40'}`, backgroundColor: colors.primary + '10', color: colors.primary, cursor: 'pointer', transition: 'all 0.15s ease' }}>
             🎯 Core Logic
           </button>
-          <button onClick={() => applyPreset('all')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.text, cursor: 'pointer' }}>
+          <button onClick={() => applyPreset('all')} style={{ padding: '6px 12px', fontSize: 12, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.text, cursor: 'pointer', transition: 'all 0.15s ease' }}>
             All
           </button>
-          <button onClick={() => applyPreset('none')} style={{ padding: '5px 10px', fontSize: 11, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.textSecondary, cursor: 'pointer' }}>
+          <button onClick={() => applyPreset('none')} style={{ padding: '6px 12px', fontSize: 12, fontWeight: '700', borderRadius: 6, border: `1px solid ${colors.border}`, backgroundColor: colors.surface, color: colors.textSecondary, cursor: 'pointer', transition: 'all 0.15s ease' }}>
             None
           </button>
         </div>
