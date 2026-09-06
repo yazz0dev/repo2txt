@@ -135,21 +135,54 @@ export const useRepoManager = () => {
       const [, owner, repo] = urlMatch;
       const cleanRepo = repo.replace(/\.git$/, '');
 
-      const headers = { 'Accept': 'application/vnd.github.v3+json' };
-      if (githubToken.trim()) headers['Authorization'] = `Bearer ${githubToken.trim()}`;
+      const trimmedToken = githubToken.trim();
+      const getAuthHeaders = (includeToken = true) => {
+        const h = { 'Accept': 'application/vnd.github.v3+json' };
+        if (includeToken && trimmedToken) {
+          h['Authorization'] = trimmedToken.startsWith('ghp_') || trimmedToken.startsWith('github_pat_')
+            ? `token ${trimmedToken}`
+            : `Bearer ${trimmedToken}`;
+        }
+        return h;
+      };
 
       // Fetch repo detail
-      const repoResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}`, { headers });
+      let repoResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}`, { headers: getAuthHeaders(true) });
       updateRateLimit(repoResp);
-      if (!repoResp.ok) throw new Error(repoResp.status === 403 ? 'Rate limit exceeded or private repo. Add GitHub Token.' : 'Repository not found');
+      if (!repoResp.ok && trimmedToken) {
+        // Fallback to unauthenticated fetch if token fails (e.g. invalid/expired token on public repo)
+        const unauthResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}`, { headers: getAuthHeaders(false) });
+        if (unauthResp.ok) {
+          repoResp = unauthResp;
+          updateRateLimit(repoResp);
+        }
+      }
+
+      if (!repoResp.ok) {
+        const errorBody = await repoResp.json().catch(() => ({}));
+        const message = errorBody.message ? `${repoResp.status} ${errorBody.message}` : `HTTP ${repoResp.status}`;
+        throw new Error(repoResp.status === 403 ? `Rate limit exceeded or private repo. Add GitHub Token. (${message})` : `Repository error: ${message}`);
+      }
 
       const repoData = await repoResp.json();
       const targetBranch = githubBranch.trim() || repoData.default_branch;
 
       // Fetch tree recursively
-      const treeResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${targetBranch}?recursive=1`, { headers });
+      let treeResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${targetBranch}?recursive=1`, { headers: getAuthHeaders(true) });
       updateRateLimit(treeResp);
-      if (!treeResp.ok) throw new Error('Failed to fetch tree structure');
+      if (!treeResp.ok && trimmedToken) {
+        const unauthResp = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${targetBranch}?recursive=1`, { headers: getAuthHeaders(false) });
+        if (unauthResp.ok) {
+          treeResp = unauthResp;
+          updateRateLimit(treeResp);
+        }
+      }
+
+      if (!treeResp.ok) {
+        const errorBody = await treeResp.json().catch(() => ({}));
+        const message = errorBody.message ? `${treeResp.status} ${errorBody.message}` : `HTTP ${treeResp.status}`;
+        throw new Error(`Failed to fetch tree structure: ${message}`);
+      }
 
       const treeDataResult = await treeResp.json();
 
@@ -311,10 +344,36 @@ export const useRepoManager = () => {
             try {
               let content = '';
               if (f.sourceType === 'github') {
-                const headers = { 'Accept': 'application/vnd.github.v3.raw' };
-                if (githubToken.trim()) headers['Authorization'] = `Bearer ${githubToken.trim()}`;
-                const resp = await fetch(`https://api.github.com/repos/${f.sourceOwner || sources[0].owner}/${f.sourceRepo || sources[0].repo}/contents/${f.originalPath}?ref=${f.branch || sources[0].branch || 'main'}`, { headers });
-                if (!resp.ok) throw new Error('Fetch failed');
+                const trimmedToken = githubToken.trim();
+                const owner = f.sourceOwner || sources[0]?.owner;
+                const repo = f.sourceRepo || sources[0]?.repo;
+                const ref = f.branch || sources[0]?.branch || 'main';
+                const fileUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${f.originalPath}?ref=${ref}`;
+
+                const getRawHeaders = (includeToken = true) => {
+                  const h = { 'Accept': 'application/vnd.github.v3.raw' };
+                  if (includeToken && trimmedToken) {
+                    h['Authorization'] = trimmedToken.startsWith('ghp_') || trimmedToken.startsWith('github_pat_')
+                      ? `token ${trimmedToken}`
+                      : `Bearer ${trimmedToken}`;
+                  }
+                  return h;
+                };
+
+                let resp = await fetch(fileUrl, { headers: getRawHeaders(true) });
+                if (!resp.ok && trimmedToken) {
+                  // Fallback to unauthenticated request if token fails (e.g. invalid/expired token on public repo)
+                  const unauthResp = await fetch(fileUrl, { headers: getRawHeaders(false) });
+                  if (unauthResp.ok) {
+                    resp = unauthResp;
+                  }
+                }
+
+                if (!resp.ok) {
+                  const errorData = await resp.json().catch(() => ({}));
+                  const detail = errorData.message ? `${resp.status} ${errorData.message}` : `HTTP ${resp.status}`;
+                  throw new Error(`Fetch failed: ${detail}`);
+                }
                 content = await resp.text();
               } else {
                 content = f.file ? await f.file.text() : await (await fetch(f.url)).text();
